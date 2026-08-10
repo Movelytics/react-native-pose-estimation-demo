@@ -18,7 +18,7 @@ import {
   usePoseTracker,
   WebViewPoseView,
   type PoseTrackerStatus,
-} from '@posetracker-tracker/react-native-pose-estimation';
+} from '@pose-tracker/react-native-pose-estimation';
 
 import type { BackendChoice } from '../App';
 

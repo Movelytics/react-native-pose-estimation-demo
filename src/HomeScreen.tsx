@@ -14,7 +14,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { usePoseTracker, WebViewPoseView } from '@posetracker-tracker/react-native-pose-estimation';
+import { usePoseTracker, WebViewPoseView } from '@pose-tracker/react-native-pose-estimation';
 
 interface Props {
   /** Currently applied (provider) API key, or undefined. */

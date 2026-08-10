@@ -18,7 +18,7 @@ import {
   type PoseTrackerFeatures,
   type PreferredBackend,
   type StartExerciseOptions,
-} from '@posetracker-tracker/react-native-pose-estimation';
+} from '@pose-tracker/react-native-pose-estimation';
 
 import HomeScreen from './src/HomeScreen';
 import DiagnosticsScreen from './src/DiagnosticsScreen';

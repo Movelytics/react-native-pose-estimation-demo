@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import Svg, { Circle, Line } from 'react-native-svg';
-import type { Keypoint, KeypointName } from '@posetracker-tracker/react-native-pose-estimation';
+import type { Keypoint, KeypointName } from '@pose-tracker/react-native-pose-estimation';
 
 const SKELETON_EDGES: ReadonlyArray<readonly [KeypointName, KeypointName]> = [
   ['left_shoulder', 'right_shoulder'],

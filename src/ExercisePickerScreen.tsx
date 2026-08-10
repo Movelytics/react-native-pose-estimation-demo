@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { usePoseTracker } from '@posetracker-tracker/react-native-pose-estimation';
+import { usePoseTracker } from '@pose-tracker/react-native-pose-estimation';
 
 import {
   EXERCISES,

@@ -18,7 +18,7 @@ import {
   type Keypoint,
   type Pose,
   type StartExerciseOptions,
-} from '@posetracker-tracker/react-native-pose-estimation';
+} from '@pose-tracker/react-native-pose-estimation';
 
 import PoseOverlay from './PoseOverlay';
 import { getExerciseInfo, isJumpExercise } from './exercises';
