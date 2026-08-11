@@ -17,6 +17,7 @@ npm install @pose-tracker/react-native-pose-estimation react-native-webview
 ```
 
 - SDK repo: https://github.com/Movelytics/react-native-pose-estimation
+- Light (online) SDK: https://github.com/Movelytics/react-native-pose-estimation-light
 - Product: https://www.posetracker.com
 - API docs: https://posetracker.gitbook.io/posetracker-api
 
