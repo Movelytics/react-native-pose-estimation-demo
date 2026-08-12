@@ -123,6 +123,8 @@ export default function App(): React.JSX.Element {
       locale: 'en' as const,
       preferredBackend: backend,
       features: hasApiKey ? FEATURES_WITH_KEY : FEATURES_KEYLESS,
+      // FSM / squat QA: request throttled engine_debug when a key unlocks the engine.
+      ...(hasApiKey ? { debugEngine: true as const } : {}),
     }),
     [backend, hasApiKey],
   );

@@ -15,6 +15,7 @@ import {
   PoseCameraView,
   usePoseTracker,
   WebViewPoseView,
+  type EngineDebugEvent,
   type Keypoint,
   type Pose,
   type StartExerciseOptions,
@@ -26,6 +27,24 @@ import { getExerciseInfo, isJumpExercise } from './exercises';
 const FACING = 'front' as const;
 const MIN_KEYPOINT_SCORE = 0.3;
 const LATENCY_WINDOW = 30;
+
+type DebugHud = {
+  ready: boolean;
+  postureHint: string;
+  missingKeypoints: string[];
+  stepIndex: number;
+  stepCount: number;
+  stepProgression: number;
+  progression: number;
+  rawCount: number;
+  publicCount: number;
+  knees: { left: number | null; right: number | null };
+  lastSkipReason: string | null;
+  engineVersion: string;
+  minGrade: string | null;
+  computeError?: string;
+  posesProcessed: number;
+};
 
 interface Props {
   onBack: () => void;
@@ -51,12 +70,17 @@ export default function CameraScreen({
   const [jumpHeightCm, setJumpHeightCm] = useState<number | null>(null);
   const [airTimeSeconds, setAirTimeSeconds] = useState<number | null>(null);
   const [loggedKeypointsHint, setLoggedKeypointsHint] = useState(false);
+  const [debugHud, setDebugHud] = useState<DebugHud | null>(null);
+  const [postureReady, setPostureReady] = useState<boolean | null>(null);
+  const [progressionPct, setProgressionPct] = useState<number | null>(null);
+  const [recommendationsLine, setRecommendationsLine] = useState('');
 
   const frameCounterRef = useRef(0);
   const totalFramesRef = useRef(0);
   const latenciesRef = useRef<number[]>([]);
   const keypointsRef = useRef<Keypoint[]>([]);
   const keypointsLogCountRef = useRef(0);
+  const debugLogCountRef = useRef(0);
 
   const isExerciseSession = Boolean(exerciseId);
 
@@ -93,7 +117,63 @@ export default function CameraScreen({
     onError: (e) => setInitMessage(`error: ${e.message}`),
     onPerformanceWarning: (e) =>
       setInitMessage(`slow device: ${e.meanFps.toFixed(1)} fps`),
-    onPosture: (e) => setExerciseLine(`posture: ${e.ready ? 'ready' : e.hint}`),
+    onPosture: (e) => {
+      setPostureReady(e.ready);
+      setExerciseLine(`posture: ${e.ready ? 'ready' : e.hint}`);
+      console.log('[PoseTracker] posture', {
+        ready: e.ready,
+        hint: e.hint,
+        direction: e.direction,
+        missingKeypoints: e.missingKeypoints,
+      });
+    },
+    onProgression: (e) => {
+      setProgressionPct(e.value);
+      console.log('[PoseTracker] progression', e.value);
+    },
+    onRecommendations: (e) => {
+      const line = e.recommendations.join(' · ');
+      setRecommendationsLine(line);
+      console.log('[PoseTracker] recommendations', e.recommendations);
+    },
+    onEngineDebug: (e: EngineDebugEvent) => {
+      setDebugHud({
+        ready: e.ready,
+        postureHint: e.postureHint,
+        missingKeypoints: e.missingKeypoints,
+        stepIndex: e.stepIndex,
+        stepCount: e.stepCount,
+        stepProgression: e.stepProgression,
+        progression: e.progression,
+        rawCount: e.rawCount,
+        publicCount: e.publicCount,
+        knees: e.knees,
+        lastSkipReason: e.lastSkipReason,
+        engineVersion: e.engineVersion,
+        minGrade: e.minGrade,
+        computeError: e.computeError,
+        posesProcessed: e.posesProcessed,
+      });
+      debugLogCountRef.current += 1;
+      const n = debugLogCountRef.current;
+      if (n <= 5 || n % 8 === 0) {
+        console.log('[PoseTracker] engine_debug', {
+          engineVersion: e.engineVersion,
+          ready: e.ready,
+          postureHint: e.postureHint,
+          missingKeypoints: e.missingKeypoints,
+          step: `${e.stepIndex}/${e.stepCount}`,
+          stepProgression: e.stepProgression,
+          progression: e.progression,
+          rawCount: e.rawCount,
+          publicCount: e.publicCount,
+          knees: e.knees,
+          lastSkipReason: e.lastSkipReason,
+          minGrade: e.minGrade,
+          computeError: e.computeError,
+        });
+      }
+    },
     onCounter: (e) => {
       setCounter(e.count);
       setExerciseLine(`reps: ${e.count}`);
@@ -287,6 +367,56 @@ export default function CameraScreen({
         </View>
       ) : null}
 
+      {isExerciseSession ? (
+        <View style={styles.debugPanel} pointerEvents="none">
+          <Text style={styles.debugTitle}>FSM debug</Text>
+          <Text style={styles.debugLine}>
+            ready:{' '}
+            {String(
+              debugHud?.ready ?? postureReady ?? '—',
+            )}{' '}
+            · eng {debugHud?.engineVersion ?? '—'}
+          </Text>
+          <Text style={styles.debugLine} numberOfLines={2}>
+            hint: {debugHud?.postureHint || exerciseLine || '—'}
+          </Text>
+          <Text style={styles.debugLine} numberOfLines={1}>
+            missing:{' '}
+            {(debugHud?.missingKeypoints?.length
+              ? debugHud.missingKeypoints.join(',')
+              : '—')}
+          </Text>
+          <Text style={styles.debugLine}>
+            step {debugHud != null ? `${debugHud.stepIndex}/${debugHud.stepCount}` : '—'} ·
+            prog {debugHud?.progression ?? progressionPct ?? '—'}% ·
+            stepProg {debugHud?.stepProgression ?? '—'}%
+          </Text>
+          <Text style={styles.debugLine}>
+            raw {debugHud?.rawCount ?? '—'} / public {debugHud?.publicCount ?? counter} ·
+            minGrade {debugHud?.minGrade ?? 'off'}
+          </Text>
+          <Text style={styles.debugLine}>
+            knees L{debugHud?.knees.left ?? '—'} R{debugHud?.knees.right ?? '—'} ·
+            skip {debugHud?.lastSkipReason ?? '—'}
+          </Text>
+          {debugHud?.computeError ? (
+            <Text style={styles.debugWarn} numberOfLines={1}>
+              err: {debugHud.computeError}
+            </Text>
+          ) : null}
+          {recommendationsLine ? (
+            <Text style={styles.debugLine} numberOfLines={1}>
+              rec: {recommendationsLine}
+            </Text>
+          ) : null}
+          {debugHud == null && isExerciseSession ? (
+            <Text style={styles.debugWarn} numberOfLines={2}>
+              no engine_debug yet — need engine ≥1.2.4 deployed + debugEngine
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
       <View style={styles.statsBar}>
         <Stat label="FPS" value={String(fps)} />
         <Stat
@@ -402,6 +532,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  debugPanel: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 168,
+    backgroundColor: 'rgba(11, 16, 32, 0.82)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#2A3358',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  debugTitle: {
+    color: '#FFC300',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  debugLine: {
+    color: '#E8ECFF',
+    fontSize: 10,
+    fontVariant: ['tabular-nums'],
+    marginTop: 1,
+  },
+  debugWarn: {
+    color: '#FE8370',
+    fontSize: 10,
+    marginTop: 2,
   },
   metricCard: {
     flex: 1,
