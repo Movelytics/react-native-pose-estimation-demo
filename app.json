@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "posetracker-sdk-testapp",
-    "slug": "posetracker-sdk-testapp",
+    "slug": "posetracker-demo-app",
+    "owner": "posetracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -34,6 +35,11 @@
         }
       ],
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "20ebd76d-2138-4833-b376-ad4e1233187a"
+      }
+    }
   }
 }

@@ -15,6 +15,7 @@ import {
   isExpoGo,
   isVisionBackendAvailable,
   PoseTrackerProvider,
+  type EngineChannel,
   type PoseTrackerFeatures,
   type PreferredBackend,
   type StartExerciseOptions,
@@ -30,6 +31,7 @@ export type BackendChoice = PreferredBackend;
 type Screen = 'home' | 'keypoints' | 'exercises' | 'tracking' | 'diagnostics';
 
 const API_KEY_STORAGE = 'posetracker.testapp.apiKey';
+const ENGINE_STORAGE = 'posetracker.testapp.engine';
 
 /** Features unlocked when an API key is set (developer-plan demo). */
 const FEATURES_WITH_KEY: PoseTrackerFeatures = {
@@ -50,6 +52,7 @@ export default function App(): React.JSX.Element {
   const [hydrated, setHydrated] = useState(false);
   const [apiToken, setApiToken] = useState<string | undefined>(undefined);
   const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const [engine, setEngine] = useState<EngineChannel>('v3');
   const [screen, setScreen] = useState<Screen>('home');
   const [runNumber, setRunNumber] = useState(1);
   const [backend, setBackend] = useState<BackendChoice>('auto');
@@ -59,13 +62,14 @@ export default function App(): React.JSX.Element {
   } | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem(API_KEY_STORAGE)
-      .then((stored) => {
+    Promise.all([AsyncStorage.getItem(API_KEY_STORAGE), AsyncStorage.getItem(ENGINE_STORAGE)])
+      .then(([stored, storedEngine]) => {
         if (stored && stored.trim()) {
           const key = stored.trim();
           setApiToken(key);
           setApiKeyDraft(key); // keep the key visible in the home field
         }
+        if (storedEngine === 'v4') setEngine('v4');
       })
       .finally(() => setHydrated(true));
   }, []);
@@ -108,6 +112,12 @@ export default function App(): React.JSX.Element {
     setRunNumber((n) => n + 1);
   }, []);
 
+  const selectEngine = useCallback((next: EngineChannel) => {
+    setEngine(next);
+    void AsyncStorage.setItem(ENGINE_STORAGE, next);
+    remount();
+  }, [remount]);
+
   const startTracking = useCallback((launch: TrackingLaunch) => {
     const options: StartExerciseOptions = {};
     if (launch.userHeightCm != null) {
@@ -134,7 +144,7 @@ export default function App(): React.JSX.Element {
   }
 
   return (
-    <PoseTrackerProvider key={runNumber} apiToken={apiToken} options={providerOptions}>
+    <PoseTrackerProvider key={runNumber} apiToken={apiToken} engine={engine} options={providerOptions}>
       <View style={styles.container}>
         <StatusBar style="light" />
         <RNStatusBar barStyle="light-content" />
@@ -146,6 +156,8 @@ export default function App(): React.JSX.Element {
             onChangeApiKeyDraft={setApiKeyDraft}
             onApplyApiKey={applyApiKey}
             onClearApiKey={clearApiKey}
+            engine={engine}
+            onSelectEngine={selectEngine}
             onOpenKeypoints={() => setScreen('keypoints')}
             onOpenFeatures={() => setScreen('exercises')}
             onOpenAdvanced={() => setScreen('diagnostics')}

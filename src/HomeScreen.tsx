@@ -14,7 +14,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { usePoseTracker, WebViewPoseView } from '@pose-tracker/react-native-pose-estimation';
+import { usePoseTracker, WebViewPoseView, type EngineChannel } from '@pose-tracker/react-native-pose-estimation';
 
 interface Props {
   /** Currently applied (provider) API key, or undefined. */
@@ -23,6 +23,8 @@ interface Props {
   onChangeApiKeyDraft: (value: string) => void;
   onApplyApiKey: () => void;
   onClearApiKey: () => void;
+  engine: EngineChannel;
+  onSelectEngine: (channel: EngineChannel) => void;
   onOpenKeypoints: () => void;
   onOpenFeatures: () => void;
   onOpenAdvanced: () => void;
@@ -40,6 +42,8 @@ export default function HomeScreen({
   onChangeApiKeyDraft,
   onApplyApiKey,
   onClearApiKey,
+  engine,
+  onSelectEngine,
   onOpenKeypoints,
   onOpenFeatures,
   onOpenAdvanced,
@@ -139,6 +143,7 @@ export default function HomeScreen({
           <Text style={styles.cardTitle}>Status</Text>
           <Row label="status" value={status} />
           <Row label="mode" value={mode} />
+          <Row label="engine" value={engine} />
           <Row label="backend" value={backendName} />
           <Row label="acceleration" value={acceleration} />
           <Row
@@ -160,6 +165,32 @@ export default function HomeScreen({
           {error && keyTest.kind !== 'fail' ? (
             <Text style={styles.errorText}>{error.message}</Text>
           ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Engine</Text>
+          <Text style={styles.hint}>
+            Default V3 (production FSM). V4 is opt-in — remounts the SDK and
+            downloads engine-v4.bundle.js at handshake.
+          </Text>
+          <View style={styles.rowActions}>
+            <Pressable
+              style={[styles.btn, engine === 'v3' ? styles.btnPrimary : styles.btnGhost]}
+              onPress={() => onSelectEngine('v3')}
+            >
+              <Text style={engine === 'v3' ? styles.btnPrimaryText : styles.btnGhostText}>
+                V3 (default)
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.btn, engine === 'v4' ? styles.btnPrimary : styles.btnGhost]}
+              onPress={() => onSelectEngine('v4')}
+            >
+              <Text style={engine === 'v4' ? styles.btnPrimaryText : styles.btnGhostText}>
+                V4 opt-in
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.card}>
@@ -258,7 +289,9 @@ export default function HomeScreen({
           <Text style={styles.modeTitle}>PoseTracker features demo</Text>
           <Text style={styles.modeDesc}>
             {mode === 'full-engine'
-              ? 'Pick an exercise (squat, push-up, jumps…) and track reps / jumps live.'
+              ? engine === 'v4'
+                ? 'Pick a V4 catalog movement (squat, shoulder roll, …). Jumps stay on V3.'
+                : 'Pick an exercise (squat, push-up, jumps…) and track reps / jumps live.'
               : hasAppliedKey
                 ? 'Key applied — wait for full-engine (or tap Test key) before opening the demo.'
                 : 'Apply a valid API key above to unlock exercises & the movement engine.'}

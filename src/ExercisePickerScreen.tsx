@@ -15,7 +15,7 @@ import {
 import { usePoseTracker } from '@pose-tracker/react-native-pose-estimation';
 
 import {
-  EXERCISES,
+  exercisesForEngine,
   getExerciseInfo,
   requiresUserHeight,
   type ExerciseInfo,
@@ -35,11 +35,12 @@ export default function ExercisePickerScreen({
   onBack,
   onStart,
 }: Props): React.JSX.Element {
-  const { mode, status, exercises: available } = usePoseTracker();
+  const { client, mode, status, exercises: available } = usePoseTracker();
   const [pendingJump, setPendingJump] = useState<string | null>(null);
   const [heightCm, setHeightCm] = useState('175');
 
   const ready = mode === 'full-engine' && status === 'ready';
+  const listed = exercisesForEngine(client.getEngineChannel());
 
   const handleSelect = (ex: ExerciseInfo): void => {
     if (!ready) return;
@@ -66,13 +67,13 @@ export default function ExercisePickerScreen({
         <Text style={styles.title}>Features demo</Text>
         <Text style={styles.subtitle}>
           {ready
-            ? `Pick an exercise — ${EXERCISES.length} listed (${available.length} from API + jumps in engine).`
+            ? `Pick an exercise — ${listed.length} listed (${available.length} from ${client.getEngineChannel()} engine).`
             : `Waiting for full-engine (${status} / ${mode})…`}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid} showsVerticalScrollIndicator={false}>
-        {EXERCISES.map((ex) => (
+        {listed.map((ex) => (
           <Pressable
             key={ex.key}
             style={[styles.card, !ready && styles.cardDisabled]}
