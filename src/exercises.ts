@@ -45,6 +45,7 @@ export const V4_EXERCISES: ExerciseInfo[] = [
   { key: 'shoulder_roll', name: 'Shoulder roll', movement_type: 'dynamic', type: 'base' },
   { key: 'shoulder_deep_breath', name: 'Shoulder deep breath', movement_type: 'dynamic', type: 'base' },
   { key: 'chair_forward_fold', name: 'Chair forward fold', movement_type: 'dynamic', type: 'base' },
+  { key: 'chair_side_stretch', name: 'Chair side stretch', movement_type: 'dynamic', type: 'base' },
 ];
 
 export function exercisesForEngine(channel: 'v3' | 'v4'): ExerciseInfo[] {
